@@ -1,0 +1,216 @@
+
+<div align="right" style="color: white;background: gray;padding: 2px;" >
+<%= current_user.name %>
+<% if user_signed_in? %>
+    <%= link_to "Cerrar sesion", destroy_user_session_path, class: "btn btn-danger" , method: :delete %>
+ <%end%>
+ </div>
+<div align="center" style="color: white;background: gray;padding: 2px;" >
+<h1>Clientes</h1>
+ <%= @date %>
+</div>
+
+<div class="row">
+	<div class="col-md-2" align="center" style="padding-top: 10px;">
+		<%= link_to 'Nuevo cliente', new_client_path, class: "btn btn-success", role: 'button' %>
+	</div>
+  <div class="col-md-2" align="center" style="padding-top: 10px;">
+    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#myModal">
+      Generar PDF
+    </button>
+    </div>
+
+    <div class="col-md-2" align="center" style="padding-top: 10px;">
+    <%= link_to 'INICIO', clients_path, class: "btn btn-danger" %>
+    </div>
+
+    <div class="col-md-2" align="center" style="padding-top: 10px;">
+      <% if current_user.role == 3 %>
+        <%= link_to 'ADMINISTRADOR', rails_admin_path, class: "btn btn-success" %>
+      <% end %>
+   </div>
+	</div><br>
+
+
+
+  <div class="row" style=" padding-left: 8px;" >
+    <%= search_form_for @search do |f| %>
+    <div class="col-md-2" align="center" style="padding-top: 10px;">
+      <%= f.text_field :nombre_cont, class: "form-control", placeholder: "NOMBRE" %>
+      </div>
+      <div class="col-md-2" align="center" style="padding-top: 10px;">
+      <%= f.text_field :ruta_lteq, class: "form-control", placeholder: "RUTA" %>
+      </div>
+      <div class="col-md-2" align="center" style="padding-top: 10px;">
+      <%= f.text_field :grupo_lteq, class: "form-control", placeholder: "GRUPO" %>
+      </div>
+      <div class="col-md-2" align="center" style="padding-top: 10px;">
+        <%= f.text_field :localidad_cont, class: "form-control", placeholder: "LOCALIDAD" %>
+        </div>
+
+      <div class="col-md-2" align="center" style="padding-top: 10px;">
+      <%= f.submit "BUSCAR", class: "btn btn-primary" %>
+      </div>
+    <%end%>
+</div>
+
+
+
+
+<div style="padding: 20px;width: auto;height: auto;">
+
+<div class="row" id="container_clients">
+    <table class="table table-bordered table-striped table-condensed" id="container">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Aval</th>
+      <% if current_user.role >= 2 %>
+      <th>Status</th>
+      <%end%>
+      <th># Pago</th>
+      <th>Ruta</th>
+      <th>Grupo</th>
+      <th>Monto</th>
+      <th>Poblado</th>
+      <th>Status de pago</th>
+      <th colspan="2">Opciones</th>
+    </tr>
+  </thead>
+
+
+  <tbody id="client-index">
+     <% @clients.each do |client| %>
+      <tr id="client_each_<%= client.id %>">
+
+        <td><%= client.nombre + " " +client.apellidos %></td>
+        <% client.avals.each do |aval| %>
+               <td> <%= aval.nombre + " " + aval.apellidos %> </td>
+         <% end %>
+
+         <% if current_user.role >= 2 %>
+         <% if client.status =='Activo' %>
+         <% @color = '#E0F8F1' %>
+         <% else %>
+         <%  @color = '#D8D8D8' %>
+         <% end %>
+        <td bgcolor=" <%= @color %> " align="center" > <strong><%= best_in_place client, :status, :as => :select, :collection => [['Activo', 'Activo'],['Inactivo', 'Inactivo']] %></strong> </td>
+        <%end%>
+
+        <td><%= client.payment.num_pago %></td>
+        <td><%= client.ruta %></td>
+        <td><%= client.grupo %></td>
+        <td><%= client.monto %></td>
+        <td><%= client.localidad %></td>
+         <td><%= best_in_place client.payment, :status, :url => payment_path(client), :as => :select, :collection => [['pagado', 'Pagado'],['Sin pagar', 'Sin pagar']] %></td>
+
+        <td align="center">
+        <%= link_to 'Detalles', client, class: 'btn btn-info', role: 'button' %>
+        <% if current_user.role >= 2 %>
+        <%= link_to 'Editar', edit_client_path(client), class: 'btn btn-warning' %>
+        <%end%>
+        <%if current_user.role ==3 %>
+        <%= link_to 'Eliminar', client, method: :delete, data: { confirm: '¿Desea eliminar a este cliente : '+client.nombre+' '+client.apellidos+' ?' }, class: 'btn btn-danger', role: 'button' %>
+        <%end%>
+         <% if client.payment.num_pago >= 10 %>
+         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#client_<%= client.id %>">
+          Renovar
+         </button>
+         <% end %>
+        </td>
+      </tr>
+      <!-- Modal - update  -->
+                  <%= form_tag(renovar_client_path(client), method: :get, remote: true) do  %>
+                  <div class="modal fade" id="client_<%= client.id %>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">Renovar</h4>
+                      </div>
+                      <div class="modal-body">
+
+                      <div class="field">
+                        <strong>Nombre del cliente a renovar:</strong><br>
+                        <strong><%= client.nombre %>&nbsp<%= client.apellidos %></strong>
+                      </div>
+                        <br><br>
+                        <div class="field">
+                        <strong>Saldo pendiente:</strong><br>
+                        <strong><%= client.payment.monto %></strong><br>
+
+                      </div>
+                        <br><br>
+                      <div class="field">
+                         <strong>Monto a renovar :</strong>
+                        <%= text_field_tag :term, params[:term], class: "form-control"%>
+                        <strong>Fecha de renovación :</strong>
+                        <%= date_field_tag :date, params[:date], class: "form-control"%>
+                        <strong>Grupo :</strong>
+                        <%= text_field_tag :grup, params[:grup], class:"form-control" %>
+
+                      </div>
+
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" id="client_button_<%= client.id %>" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                        <%= submit_tag "Renovar", class: "btn btn-primary" %>
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+                  <% end %>
+            <!-- Modal -->
+
+
+              <!-- MODAL PDF -->
+              <%= form_tag clients_path,method: :get do %>
+              <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                  <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                      <h4 class="modal-title" id="myModalLabel">Generar Lista</h4>
+                    </div>
+                    <div class="modal-body">
+                          <%= text_field_tag :ruta, params[:ruta], class: "form-control", placeholder: "Ruta" %><br>
+                          <%= text_field_tag :grupo, params[:grupo], class: "form-control", placeholder: "Grupo" %><br>
+                          <%= text_field_tag :localidad, params[:localidad], class: "form-control", placeholder: "Localidad" %><br>
+
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                        <%= submit_tag "Generar Lista", name: nil,  class: "btn btn-primary btn-suc" %>
+                    </div>
+                  </div>
+                  </div>
+             </div>
+             <% end %>
+               <!-- MODAL PDF -->
+
+    <% end %>
+  </tbody>
+</table>
+
+
+</div>
+
+<!-- TOTAL DE PRESTAMOS
+
+<div  align="right" class="row">
+  <div class="col-sm-2">
+    <div class="panel panel-info">
+  <div class="panel-heading"><strong>TOTAL EN PRESTAMOS</strong></div>
+  <div class="panel-body"><%= "#{@total}" %></div>
+</div>
+  </div>
+</div>
+-->
+
+
+</div>
+
+
+
+
+</div>
