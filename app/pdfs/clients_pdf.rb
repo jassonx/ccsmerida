@@ -32,7 +32,7 @@ class ClientsPdf < Prawn::Document
 	def clients_rows
 
 	  rows = []
-	  rows << ['NOMBRE','DIRECCIÓN', 'NOMBRE AVAL', 'DIRECCION AVAL', 'GARANTIAS', 'MONTO', 'PAGO', 'P  1', 'P  2', 'P  3', 'P  4', 'P  5', 'P  6', 'P  7', 'P  8', 'P  9', 'P 10', 'P 11', 'P 12', 'P 13', 'P 14', 'P 15' ]
+	  rows << ['NOMBRE','DIRECCIÓN', 'NOMBRE AVAL', 'DIRECCION AVAL', 'GARANTIAS', 'MONTO', 'P  1', 'P  2', 'P  3', 'P  4', 'P  5', 'P  6', 'P  7', 'P  8', 'P  9', 'P 10', 'P 11', 'P 12', 'P 13', 'P 14', 'P 15' ]
 
 	  @cliente.each do |clt|
 	    @cliente_row = clt.nombre + ' ' + clt.apellidos
